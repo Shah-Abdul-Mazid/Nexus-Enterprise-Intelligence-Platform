@@ -26,7 +26,7 @@ class RetrieverAgent:
             memory_context = ""
 
         # 2. Search Main Index
-        results = self.index.query(vector=query_vec, top_k=4, include_metadata=True)
+        results = self.index.query(vector=query_vec, top_k=8, include_metadata=True)
         
         context = memory_context + "\n\n".join(
             [m["metadata"].get("text", "") for m in results["matches"]]
