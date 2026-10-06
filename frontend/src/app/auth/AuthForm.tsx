@@ -197,8 +197,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
             <div className="mt-6 rounded-lg border border-white/10 bg-black/20 p-4 text-xs text-slate-400">
               <p className="mb-2 font-medium text-slate-200">Demo accounts</p>
-              <p>Admin: admin@nexus.org / Admin2026@</p>
-              <p>User: user@nexus.org / User2026@</p>
+              <p>Admin: admin@nexus.org / Admin2026</p>
+              <p>User: user@nexus.org / User2026</p>
             </div>
           </div>
         </section>
