@@ -132,8 +132,8 @@ Nexus-Enterprise-Intelligence-Platform/
 ### Frontend Configuration (`frontend/.env`)
 ```env
 # Render Backend Service URL
-NEXT_PUBLIC_API_URL=https://nexus-enterprise-intelligence-platform.onrender.com
-NEXT_PUBLIC_BACKEND_URL=https://nexus-enterprise-intelligence-platform.onrender.com
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
+NEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com
 
 # Shared Application Firewall Token (Matches RENDER_INTERNAL_SECRET on backend)
 NEXT_PUBLIC_RENDER_INTERNAL_SECRET=your_32_byte_internal_secret_here
