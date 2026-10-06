@@ -39,11 +39,22 @@ export async function middleware(request: NextRequest) {
 
   // 1. Block Automated Malicious Scanners on API routes
   if (path.startsWith("/api/")) {
-    const maliciousScanners = ["sqlmap", "nikto", "masscan", "acunetix", "havij"];
-    if (maliciousScanners.some((bot) => userAgent.toLowerCase().includes(bot))) {
+    const maliciousScanners = [
+      "sqlmap",
+      "nikto",
+      "masscan",
+      "acunetix",
+      "havij",
+    ];
+    if (
+      maliciousScanners.some((bot) => userAgent.toLowerCase().includes(bot))
+    ) {
       return new NextResponse(
-        JSON.stringify({ error: "Access Denied", message: "Automated scan signature detected." }),
-        { status: 403, headers: { "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: "Access Denied",
+          message: "Automated scan signature detected.",
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
       );
     }
   }
@@ -52,12 +63,15 @@ export async function middleware(request: NextRequest) {
   const limiter = getRateLimiter();
   if (limiter && path.startsWith("/api/")) {
     try {
-      const { success, limit, remaining, reset } = await limiter.limit(`rate_${ip}`);
+      const { success, limit, remaining, reset } = await limiter.limit(
+        `rate_${ip}`,
+      );
       if (!success) {
         return new NextResponse(
           JSON.stringify({
             error: "Too Many Requests",
-            message: "Rate limit exceeded. Please wait a minute before retrying.",
+            message:
+              "Rate limit exceeded. Please wait a minute before retrying.",
           }),
           {
             status: 429,
@@ -67,7 +81,7 @@ export async function middleware(request: NextRequest) {
               "X-RateLimit-Remaining": remaining.toString(),
               "X-RateLimit-Reset": reset.toString(),
             },
-          }
+          },
         );
       }
     } catch (rateLimitErr) {
@@ -82,7 +96,10 @@ export async function middleware(request: NextRequest) {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()",
+  );
 
   return response;
 }

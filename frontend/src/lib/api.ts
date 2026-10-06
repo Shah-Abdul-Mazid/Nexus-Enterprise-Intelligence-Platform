@@ -1,11 +1,7 @@
 import axios from "axios";
 
 export const getApiBase = () => {
-  return (
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    "https://nexus-enterprise-intelligence-platform.onrender.com"
-  );
+  return process.env.PUBLIC_API_URL || process.env.PUBLIC_BACKEND_URL;
 };
 
 export const api = axios.create({
@@ -24,7 +20,7 @@ api.interceptors.request.use((config) => {
   }
 
   // 2. Attach shared internal secret header to satisfy backend firewall
-  const internalSecret = process.env.NEXT_PUBLIC_RENDER_INTERNAL_SECRET;
+  const internalSecret = process.env.PUBLIC_RENDER_INTERNAL_SECRET;
   if (internalSecret) {
     config.headers["X-Internal-Secret"] = internalSecret;
   }

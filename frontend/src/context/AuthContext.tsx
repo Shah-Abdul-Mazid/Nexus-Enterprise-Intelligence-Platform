@@ -7,7 +7,11 @@ import { AuthSnapshot } from "@/types";
 interface AuthContextType {
   auth: AuthSnapshot;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => Promise<void>;
   logout: () => void;
 }
 
@@ -66,7 +70,9 @@ const notifyAuthChanged = () => {
   window.dispatchEvent(new Event("authchange"));
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const auth = useSyncExternalStore(
     subscribeToAuthChanges,
     getAuthSnapshot,
@@ -88,7 +94,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     notifyAuthChanged();
   };
 
-  const register = async (email: string, password: string, fullName: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    fullName: string,
+  ) => {
     await api.post("/api/v1/auth/register", {
       email,
       password,
