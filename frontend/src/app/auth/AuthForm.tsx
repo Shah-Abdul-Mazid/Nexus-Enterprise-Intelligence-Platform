@@ -3,13 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import {
-  Activity,
-  Cpu,
-  Database,
-  LockKeyhole,
-  Sparkles,
-} from "lucide-react";
+import { Activity, Cpu, Database, LockKeyhole, Sparkles } from "lucide-react";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -56,7 +50,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
         if (error.response?.data?.detail) {
           setLoginError(String(error.response.data.detail));
         } else {
-          setLoginError("Login failed. Please verify your credentials or ensure the backend server is running.");
+          setLoginError(
+            "Login failed. Please verify your credentials or ensure the backend server is running.",
+          );
         }
       } else {
         if (error.response?.data?.detail) {
@@ -84,7 +80,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </div>
             <div>
               <p className="text-lg font-semibold">Nexus Intelligence</p>
-              <p className="text-xs text-slate-400">Private enterprise RAG platform</p>
+              <p className="text-xs text-slate-400">
+                Private enterprise RAG platform
+              </p>
             </div>
           </div>
 
@@ -97,18 +95,33 @@ export default function AuthForm({ mode }: AuthFormProps) {
               Ask your enterprise data. Get grounded answers with governance.
             </h1>
             <p className="mt-5 max-w-xl text-sm leading-6 text-slate-400 md:text-base">
-              A recruiter-friendly showcase of FastAPI, Next.js, Pinecone, document ingestion, semantic retrieval,
-              agent orchestration, and compliance checks in one product experience.
+              A recruiter-friendly showcase of FastAPI, Next.js, Pinecone,
+              document ingestion, semantic retrieval, agent orchestration, and
+              compliance checks in one product experience.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <LoginFeature icon={<Database size={18} />} title="RAG Search" value="Pinecone" />
-              <LoginFeature icon={<Cpu size={18} />} title="AI Agents" value="API + RAG routing" />
-              <LoginFeature icon={<LockKeyhole size={18} />} title="Security" value="JWT access" />
+              <LoginFeature
+                icon={<Database size={18} />}
+                title="RAG Search"
+                value="Pinecone"
+              />
+              <LoginFeature
+                icon={<Cpu size={18} />}
+                title="AI Agents"
+                value="API + RAG routing"
+              />
+              <LoginFeature
+                icon={<LockKeyhole size={18} />}
+                title="Security"
+                value="JWT access"
+              />
             </div>
           </div>
 
-          <p className="text-xs text-slate-500">Built for MGI interview demo readiness.</p>
+          <p className="text-xs text-slate-500">
+            Built for MGI interview demo readiness.
+          </p>
         </section>
 
         <section className="flex items-center justify-center p-6">
@@ -127,7 +140,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   router.push("/auth/login");
                 }}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  mode === "login" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"
+                  mode === "login"
+                    ? "bg-sky-500 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 Sign In
@@ -138,7 +153,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   router.push("/auth/register");
                 }}
                 className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  mode === "register" ? "bg-sky-500 text-white" : "text-slate-400 hover:text-white"
+                  mode === "register"
+                    ? "bg-sky-500 text-white"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 Sign Up
@@ -148,7 +165,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "register" && (
                 <label className="block">
-                  <span className="mb-2 block text-sm text-slate-300">Full Name</span>
+                  <span className="mb-2 block text-sm text-slate-300">
+                    Full Name
+                  </span>
                   <input
                     type="text"
                     required
@@ -160,7 +179,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 </label>
               )}
               <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">Email / Username</span>
+                <span className="mb-2 block text-sm text-slate-300">
+                  Email / Username
+                </span>
                 <input
                   type="text"
                   required
@@ -171,7 +192,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 />
               </label>
               <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">Password</span>
+                <span className="mb-2 block text-sm text-slate-300">
+                  Password
+                </span>
                 <input
                   type="password"
                   required
@@ -182,8 +205,16 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 />
               </label>
 
-              {authMessage && <p className="text-center text-xs text-emerald-300">{authMessage}</p>}
-              {loginError && <p className="text-center text-xs text-rose-300">{loginError}</p>}
+              {authMessage && (
+                <p className="text-center text-xs text-emerald-300">
+                  {authMessage}
+                </p>
+              )}
+              {loginError && (
+                <p className="text-center text-xs text-rose-300">
+                  {loginError}
+                </p>
+              )}
 
               <button
                 type="submit"
@@ -207,7 +238,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
   );
 }
 
-function LoginFeature({ icon, title, value }: { icon: React.ReactNode; title: string; value: string }) {
+function LoginFeature({
+  icon,
+  title,
+  value,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string;
+}) {
   return (
     <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
       <div className="mb-3 text-sky-200">{icon}</div>

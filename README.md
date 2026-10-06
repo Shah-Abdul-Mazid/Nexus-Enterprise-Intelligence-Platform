@@ -1,196 +1,234 @@
 # 🚀 Nexus Intelligence: Enterprise Multi-Agent AI Platform
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-000000.svg?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2016-000000.svg?style=flat&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![MongoDB Atlas](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248.svg?style=flat&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![Pinecone](https://img.shields.io/badge/VectorDB-Pinecone-262626.svg?style=flat&logo=pinecone&logoColor=white)](https://www.pinecone.io/)
-[![LangGraph](https://img.shields.io/badge/Orchestration-Custom%20Agents-blue.svg?style=flat)](https://langchain-ai.github.io/langgraph/)
+[![Upstash Redis](https://img.shields.io/badge/Edge%20Rate%20Limit-Upstash%20Redis-00E599.svg?style=flat&logo=redis&logoColor=white)](https://upstash.com/)
+[![Render](https://img.shields.io/badge/Deploy-Render-46E3B7.svg?style=flat&logo=render&logoColor=white)](https://render.com/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000.svg?style=flat&logo=vercel&logoColor=white)](https://vercel.com/)
 
-> **Nexus Intelligence** is a state-of-the-art AI ecosystem designed to transform massive corporate data into instant, secure, and actionable insights. Built for **Business Product Solutions**, it leverages a sophisticated multi-agent architecture to ensure grounded, compliant, and real-time intelligence.
+> **Nexus Intelligence** is a production-grade enterprise cognitive platform designed to turn unstructured corporate data into grounded, secure, and actionable intelligence. Built with an autonomous multi-agent architecture, strict perimeter security, and dual-layer application firewalls across **Vercel** and **Render**.
 
 ---
 
 ## 👔 Executive Summary
-In modern enterprise environments, critical knowledge is often siloed in thousands of PDFs, Excel sheets, and internal portals. **Nexus Intelligence** serves as a private, secure "Cognitive Layer" for the organization. It enables employees to query complex data and receive answers that are **100% grounded** in verified company documents, preventing "hallucinations" and ensuring data sovereignty.
+
+In enterprise environments, critical knowledge is siloed across PDFs, Excel spreadsheets, internal web portals, and relational datastores. **Nexus Intelligence** serves as a secure, private **Cognitive Layer** for the organization:
+- **Zero Hallucination Tolerance:** Responses are 100% grounded in verified internal documents and vectorized data.
+- **Strict Perimeter Isolation:** Backend services on Render are shielded behind an internal cryptographic firewall token (`X-Internal-Secret`), preventing direct internet abuse.
+- **Enterprise Compliance:** PII scanning, prompt inspection, and server-side role-based access control (RBAC).
 
 ---
 
-## 🛠️ My Key Contributions: What I Built & Why
-This project demonstrates my ability to architect and deliver a full-lifecycle AI product.
+## 🏗️ Architecture & Security Topology
 
-- **System Orchestration**: I designed a **Supervisor-Worker pattern** that intelligently routes queries between live APIs and private RAG databases, optimizing both cost and accuracy.
-- **Advanced Vector Engineering**: I implemented a **Multi-Namespace RAG Pipeline** in Pinecone, featuring a `feedback_memory` namespace that allows the AI to learn from user-upvoted answers.
-- **Enterprise ETL Pipeline**: I built a robust ingestion engine that handles **Unstructured PDFs** and **Structured Excel/CSV data**, converting complex tables into semantic records the LLM can understand.
-- **Security & Compliance**: I personally engineered the **Compliance Agent**, a post-processing layer that scans AI outputs for PII (emails, phones) and enforces enterprise safety standards.
-- **Production DevOps**: I managed the end-to-end deployment on **AWS EC2**, using **PM2** for process management and **JWT (RS256)** for secure authentication.
-
----
-
-## 🏗️ Technical Architecture: The Agentic Workflow
-Nexus utilizes a **decoupled, stateful agentic architecture**. Unlike linear RAG pipelines, Nexus employs specialized agents that reason, retrieve, and verify.
-
-### 👑 The Supervisor Agent
-The master orchestrator that manages the stateful workflow.
-1.  **Intent Detection**: Routes queries to the *Live Data Agent* or *Retriever Agent*.
-2.  **Synthesis**: Coordinates the *Generator Agent* for grounded responses.
-3.  **Verification**: Triggers the *Compliance Agent* for security checks.
-
-### 🔍 Specialized Agents
-*   **Retriever Agent**: Implements **Two-Step Semantic Search** (Memory Namespace + Main Index).
-*   **Live Data Agent**: Real-time connectors for external APIs (e.g., WeatherAPI).
-*   **Compliance Agent**: Dedicated security layer for **PII Detection** and redaction.
-*   **Generator Agent**: Multi-provider support (OpenAI GPT-4o, Gemini 1.5 Flash, Grok).
-
----
-
-## 🛠️ Tech Stack
-- **Backend**: FastAPI (Async Python 3.10+), Pydantic v2.
-- **Frontend**: Next.js 14, Tailwind CSS, Framer Motion (High-Fidelity UI).
-- **Intelligence**: OpenAI API, Google Vertex AI, LangChain logic.
-- **Vector Engine**: Pinecone Cloud (Serverless).
-- **Ingestion**: BeautifulSoup4 (Web), Unstructured.io (PDF/Docx), Pandas (Tables).
-
----
-
-## 📂 Project Structure
 ```text
-├── backend/
-│   ├── app/
-│   │   ├── agents/      # Multi-agent logic (Supervisor, Retriever, etc.)
-│   │   ├── api/         # V1 Endpoints (Auth, Chat, Ingestion)
-│   │   ├── core/        # Security, Config, JWT logic
-│   │   ├── db/          # Pinecone & Database connectors
-│   │   └── services/    # Business logic & feedback loops
-├── frontend/
-│   ├── src/app/         # Next.js App Router (Dashboard & Auth)
-│   └── public/          # Assets & Documentation
+[ Client Browser / Authenticated User ]
+                  │
+                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Vercel Edge Layer (Next.js 16)                          │
+│  • Edge Middleware Rate Limiting (Upstash Redis 30 req/min) │
+│  • Automated Bot & Malicious Scanner Blocker                │
+│  • OWASP Security Headers (FrameGuard, nosniff, HSTS)       │
+│  • Dynamic API Client injecting X-Internal-Secret & JWT     │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ Authenticated & Shielded HTTPS Request
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 2. Render Application Gateway (FastAPI Backend)             │
+│  • BackendFirewallMiddleware (Enforces X-Internal-Secret)   │
+│  • Strict CORS Whitelist (Vercel Production & Localhost)    │
+│  • Preflight OPTIONS Bypass & DoS Payload Capping (25MB)    │
+│  • Non-blocking MongoDB Atlas Resilient Connection Engine   │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+       ┌───────────────────┼───────────────────┐
+       ▼                   ▼                   ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│ MongoDB      │    │ Pinecone     │    │ Multi-Agent  │
+│ Atlas Cloud  │    │ Vector DB    │    │ LLM Engine   │
+│ (Users/Chat) │    │ (Semantic)   │    │ (GPT-4/Grok) │
+└──────────────┘    └──────────────┘    └──────────────┘
 ```
 
 ---
 
-## 🚶 Full Project Walkthrough
+## 🛠️ Key Architectural Components
 
-### 1. Secure Authentication
-- **Logic**: JWT-based authentication with role-based access (Admin/User).
-- **Backend**: `auth.py` handles token generation and hashing using Passlib.
+### 1. Autonomous Multi-Agent Core (`backend/app/agents/`)
+- **👑 Supervisor Agent (`supervisor.py`):** Central orchestrator that classifies user intent, delegates tasks to specialist workers, and enforces traceability.
+- **🔍 Retriever Agent (`retriever.py`):** Executes two-phase semantic retrieval using Pinecone namespaces (`feedback_memory` for user-verified answers and `main` for corporate docs).
+- **🌐 Live Data Agent (`live_data.py`):** Integrates live real-time APIs (e.g., WeatherAPI) when real-time answers are demanded.
+- **🛡️ Compliance Agent (`compliance.py`):** Post-generation privacy layer that redacts PII (emails, phone numbers) before emitting final responses.
+- **🤖 Generator Agent (`generator.py`):** Dynamic multi-provider synthesis supporting OpenAI GPT-4o, Google Gemini, and Grok.
 
-### 2. Knowledge Ingestion
-- **File Upload**: Supports PDF, Docx, CSV, and Excel. 
-    - *Under the hood*: Files are partitioned, chunked, and vectorized using OpenAI/Google embeddings.
-- **Web Scraping**: Input any URL to index its content.
-    - *Under the hood*: BeautifulSoup4 extracts text, removes noise, and performs semantic indexing.
+### 2. Dual-Layer Application Firewall
+- **Edge Layer (`frontend/src/middleware.ts`):**
+  - Upstash Redis sliding window limiter prevents financial exhaustion from LLM prompt flooding.
+  - Intercepts malicious scanner user-agents (`sqlmap`, `nikto`, `masscan`, `acunetix`).
+  - Whitelists static assets (`/_next/static`, images, fonts) to prevent false-positive throttling.
+- **Core Layer (`backend/security/firewall.py`):**
+  - Validates `X-Internal-Secret` matching `RENDER_INTERNAL_SECRET` on all incoming public requests.
+  - Whitelists localhost loopbacks for smooth development workflows.
+  - Enforces payload bounds (25MB limit) to block DoS memory attacks.
 
-### 3. The Intelligent Chat
-1. **Routing**: The Supervisor decides if the query needs real-time APIs or private documents.
-2. **Context Retrieval**: The Retriever Agent checks memory first, then the main index.
-3. **Reasoning**: LLM synthesizes an answer grounded **only** in the retrieved context.
-4. **Agent Trace**: UI displays internal logs for 100% transparency.
-
----
-
-## 💻 Deep File & Function Analysis (Core Logic)
-
-### 👑 The Agent Layer (`backend/app/agents/`)
-
-#### `supervisor.py` (The Orchestrator)
-- **FUNCTION: `process_request(query)`**: Routes queries based on intent detection.
-    ```python
-    if live_data_agent.can_handle(query):
-        return await live_data_agent.run(query)
-    context, sources = retriever_agent.run(query)
-    answer = generator_agent.run(query, context)
-    ```
-
-#### `retriever.py` (The Memory)
-- **FUNCTION: `run(query)`**: Performs semantic search across Pinecone namespaces.
-    ```python
-    feedback_results = self.index.query(vector=query_vec, top_k=1, namespace="feedback_memory")
-    results = self.index.query(vector=query_vec, top_k=4)
-    ```
-
-#### `compliance.py` (The Guardrail)
-- **FUNCTION: `run(text)`**: Scans for PII and redacts sensitive data.
-    ```python
-    if not check["compliant"]:
-        answer = "REDACTED: Response blocked by enterprise security policy."
-    ```
-
-### 📤 The Ingestion Layer (`backend/app/api/v1/endpoints/`)
-
-#### `upload.py` (File Processing)
-- **FUNCTION: `table_to_records(file_path)`**: Converts Excel/CSV rows into sentences.
-    ```python
-    text = f"Row: {idx + 2}\n" + "\n".join([f"{k}: {v}" for k, v in row_data.items()])
-    ```
-
-#### `scrape.py` (Web Ingestion)
-- **FUNCTION: `_perform_scrape(url)`**: Extracts clean text from URLs.
-    ```python
-    soup = BeautifulSoup(response.content, 'html.parser')
-    text = soup.get_text(separator=' ', strip=True)
-    ```
+### 3. Hardened Ingestion Engine (`backend/app/api/v1/endpoints/`)
+- **File Upload Guard (`upload.py`):** Strips path traversal sequences with `os.path.basename` and restricts files to whitelisted formats (`.pdf`, `.docx`, `.xlsx`, `.csv`).
+- **SSRF-Protected Scraper (`scrape.py`):** Validates web targets, blocking loopbacks, RFC1918 private subnets, and cloud instance metadata (`169.254.169.254`).
+- **Role-Gated Ingestion (`admin.py`):** Requires administrative Bearer authorization (`role == "admin"`) to trigger directory indexing.
 
 ---
 
-## 🚀 Deployment & Scaling
+## 📂 Project Directory Structure
 
-### 1. AWS EC2 & PM2 Setup
-The platform is designed to be managed using **PM2** on an Ubuntu-based AWS EC2 instance.
-```bash
-# Start Backend
-pm2 start "uvicorn main:app --host 0.0.0.0 --port 8000" --name nexus-backend
-
-# Start Frontend
-cd frontend && npm run build
-pm2 start "npm run start" --name nexus-frontend
+```text
+Nexus-Enterprise-Intelligence-Platform/
+├── .gitignore                      # Comprehensive Git exclusion rules
+├── README.md                       # Complete platform documentation
+├── run.ps1                         # Local startup script
+│
+├── brain/
+│   └── security/                   # Central Security Governance Hub
+│       ├── threat-model.md         # Assets, trust boundaries & mitigations
+│       ├── secrets.md              # Secret inventory & rotation schedules
+│       ├── attack-surface.md       # Surface mapping & endpoint controls
+│       └── security-checklist.md   # Deployment verification checklist
+│
+├── frontend/                       # Next.js 16 Web Application (Vercel)
+│   ├── .env                        # Local environment variables
+│   ├── .env.example                # Safe environment template
+│   ├── package.json
+│   ├── src/
+│   │   ├── middleware.ts           # Edge rate limiting & bot blocking
+│   │   ├── lib/
+│   │   │   └── api.ts              # Axios client with internal secret & JWT
+│   │   ├── app/                    # Next.js App Router (Dashboard & Auth)
+│   │   └── context/                # AuthContext (State & Token storage)
+│   └── public/
+│
+└── backend/                        # FastAPI REST API (Render / Docker)
+    ├── .env                        # Local backend environment
+    ├── .env.example                # Safe backend environment template
+    ├── Dockerfile                  # Hardened multi-stage non-root container
+    ├── requirements.txt            # Python dependencies
+    ├── main.py                     # Entry point, CORS & middleware mounting
+    ├── security/
+    │   └── firewall.py             # Custom service-isolation firewall
+    ├── app/
+    │   ├── agents/                 # Multi-agent orchestrators
+    │   ├── api/v1/endpoints/       # Auth, Chat, Upload, Scrape, Admin
+    │   ├── core/                   # Security, JWT & Pydantic settings
+    │   ├── db/                     # Resilient MongoDB & Pinecone connectors
+    │   └── services/               # RAG business logic & feedback service
+    └── uploads/                    # Temporary staging for uploads
 ```
 
-### 2. DuckDNS & SSL Setup
-To provide a secure, production-ready URL (`https://nexusintelligence.duckdns.org`), we use **DuckDNS** and **Nginx** as a reverse proxy.
+---
 
-- **DuckDNS**: Syncs the AWS EC2 Elastic IP to a custom domain.
-- **Nginx Config**:
-```nginx
-server {
-    server_name nexusintelligence.duckdns.org;
+## ⚙️ Environment Variables Reference
 
-    # Frontend (Next.js)
-    location / {
-        proxy_pass http://localhost:3000;
-    }
+### Frontend Configuration (`frontend/.env`)
+```env
+# Render Backend Service URL
+NEXT_PUBLIC_API_URL=https://nexus-enterprise-intelligence-platform.onrender.com
+NEXT_PUBLIC_BACKEND_URL=https://nexus-enterprise-intelligence-platform.onrender.com
 
-    # Backend API (FastAPI)
-    location /api {
-        proxy_pass http://localhost:8000;
-    }
+# Shared Application Firewall Token (Matches RENDER_INTERNAL_SECRET on backend)
+NEXT_PUBLIC_RENDER_INTERNAL_SECRET=9f8e4c3a2b1d0e5f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f
 
-    listen 443 ssl; # Managed by Certbot
-}
-```
-- **SSL**: Secured via **Let's Encrypt (Certbot)** for enterprise-grade encryption.
-
-#### 🛡️ Certificate Verification
-To verify the SSL status and renewal on the AWS server, use:
-```bash
-# Check existing certificates
-sudo certbot certificates
-
-# Test live SSL connection and expiry
-openssl s_client -connect nexusintelligence.duckdns.org:443 -servername nexusintelligence.duckdns.org | openssl x509 -noout -dates
-
-# Check Nginx configuration health
-sudo nginx -t
+# Upstash Redis Edge Rate Limiting
+UPSTASH_REDIS_REST_URL=https://apt-kitten-203403.upstash.io
+UPSTASH_REDIS_REST_TOKEN=gQAAAAAAAxqLAAIgcDE1MzI2NTkzMzE0MmY0ZjYxOTRhMWRjNWZhNWYwOTFlZQ
 ```
 
-### 3. Scalability
-The stateless FastAPI backend and serverless Pinecone index allow the system to scale horizontally to handle thousands of concurrent users.
+### Backend Configuration (`backend/.env`)
+```env
+# LLM Providers & Vector DB
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your_openai_api_key
+GOOGLE_API_KEY=your_google_api_key
+GROK_API_KEY=your_grok_api_key
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX_NAME=enterprise-rag
+TAVILY_API_KEY=your_tavily_api_key
+WEATHER_API_KEY=your_weather_api_key
+
+# MongoDB Atlas Connection
+DATABASE_URL=mongodb+srv://<username>:<password>@cluster0.2nsvkzq.mongodb.net/?appName=Cluster0
+DEMO_MODE=false
+
+# Security & Perimeter Controls
+RENDER_INTERNAL_SECRET=9f8e4c3a2b1d0e5f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f
+JWT_SECRET_KEY=9f8e4c3a2b1d0e5f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f
+FRONTEND_URL=https://nexus-enterprise-intelligence-platform.vercel.app
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://nexus-enterprise-intelligence-platform.vercel.app,https://nexus-enterprise-intelligence-platform.onrender.com
+```
 
 ---
 
-## 👤 Recruiter-Focused Summary
-This project demonstrates expertise in **Production-Level AI Engineering**:
-*   **Full-Stack Ownership**: From Next.js UI to FastAPI backend.
-*   **Advanced RAG**: Implementing namespaces, memory feedback, and multi-source ingestion.
-*   **Agentic Systems**: Moving beyond "prompting" to "architecting" autonomous workflows.
-*   **Enterprise Mindset**: Prioritizing Security, Compliance, and Traceability.
+## 🚀 Quickstart: Local Development
+
+### 1. Prerequisites
+- **Python 3.11+** installed
+- **Node.js 18+** & npm installed
+- Active **MongoDB Atlas** cluster & **Pinecone** index
+
+### 2. Run Backend
+```powershell
+# Navigate to backend directory
+cd backend
+
+# Create & activate virtual environment (optional)
+python -m venv .venv
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start FastAPI development server
+uvicorn main:app --reload --port 8000
+```
+*API will be available at:* `http://localhost:8000` (Docs: `http://localhost:8000/docs`)
+
+### 3. Run Frontend
+```powershell
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start Next.js development server
+npm run dev
+```
+*Web Application will be available at:* `http://localhost:3000`
 
 ---
+
+## 🐳 Production Deployment
+
+### 1. Backend Containerization (Render)
+The repository includes an optimized, non-root multi-stage Dockerfile (`backend/Dockerfile`):
+- **Stage 1 (Builder):** Installs compilation toolchains (`gcc`), compiles dependencies into `/install`, and cleans up.
+- **Stage 2 (Runner):** Uses lean `python:3.11-slim`, copies pre-built wheels, creates unprivileged user `appuser`, and runs Uvicorn with `--proxy-headers` for Render's reverse proxy.
+
+### 2. Frontend Deployment (Vercel)
+- Connect repository to Vercel and point root directory to `frontend`.
+- Configure the environment variables from `frontend/.env.example`.
+- Next.js Edge Middleware will automatically enforce Upstash rate limiting and bot filtering.
+
+---
+
+## 🛡️ Security & Threat Governance
+Complete security models and checklists are maintained in the repository:
+- 📖 [Threat Model](brain/security/threat-model.md) — System assets, trust boundaries, and threat matrix.
+- 📖 [Secrets Management & Audit](brain/security/secrets.md) — Secret inventory and lifecycle management.
+- 📖 [Attack Surface Map](brain/security/attack-surface.md) — Ingestion and endpoint surface review.
+- 📖 [Security Checklist](brain/security/security-checklist.md) — Production readiness verification.
+
+---
+
+## 📄 License
+This project is licensed under the MIT License — see the LICENSE file for details.
