@@ -1,22 +1,33 @@
 import axios from "axios";
 
 export const getApiBase = () => {
-  // Always use the production backend — works from both local dev and production
-  if (typeof window === "undefined") return "https://ai-rag-project-llm-based.onrender.com";
-  return "https://ai-rag-project-llm-based.onrender.com";
+  return (
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    "https://nexus-enterprise-intelligence-platform.onrender.com"
+  );
 };
 
 export const api = axios.create({
   baseURL: getApiBase(),
+  timeout: 60000,
 });
 
-// Interceptor to add Authorization header automatically if token exists in localStorage
+// Interceptor to add Authorization header and Internal Secret firewall header
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
+    // 1. Attach JWT token for authenticated user requests
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
+
+  // 2. Attach shared internal secret header to satisfy backend firewall
+  const internalSecret = process.env.NEXT_PUBLIC_RENDER_INTERNAL_SECRET;
+  if (internalSecret) {
+    config.headers["X-Internal-Secret"] = internalSecret;
+  }
+
   return config;
 });

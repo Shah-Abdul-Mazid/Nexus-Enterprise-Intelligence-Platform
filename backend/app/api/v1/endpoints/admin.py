@@ -1,14 +1,18 @@
 import os
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from app.db.pinecone import vector_store
 from app.agents.retriever import retriever_agent
 from app.utils.unstructured_loader import advanced_partition_file
+from app.api.v1.endpoints.auth import get_current_user
+from app.db.models import User
 
 router = APIRouter()
 
 @router.post("/ingest-local")
-async def ingest_local_data():
-    """Triggers ingestion of all documents in the local data directory"""
+async def ingest_local_data(current_user: User = Depends(get_current_user)):
+    """Triggers ingestion of all documents in the local data directory (Admin only)"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin authorization required.")
     # Look for data directory relative to the project root
     data_dir = os.path.abspath(os.path.join(os.getcwd(), "..", "data"))
     if not os.path.exists(data_dir):

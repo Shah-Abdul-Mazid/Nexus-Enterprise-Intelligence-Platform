@@ -23,4 +23,10 @@ class Settings(BaseSettings):
     
     UPLOADS_DIR: str = os.getenv("UPLOADS_DIR", "./uploads")
 
+    # Security & Firewall Settings
+    RENDER_INTERNAL_SECRET: str = os.getenv("RENDER_INTERNAL_SECRET", "")
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "mgi_interview_super_secret_key")
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "")
+
 settings = Settings()

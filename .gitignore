@@ -1,29 +1,49 @@
-# Environment and secrets
+# ==============================================================================
+# Environment & Secrets (NEVER COMMIT)
+# ==============================================================================
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.crt
 
-# Python
+# ==============================================================================
+# Python & Virtual Environments
+# ==============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
 .Python
 .venv/
+*/.venv/
 venv/
+*/venv/
 env/
+*/env/
 ENV/
+*/ENV/
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Testing & Coverage
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 
-# Node / Next.js
+# ==============================================================================
+# Node.js & Next.js
+# ==============================================================================
 node_modules/
+*/node_modules/
 .next/
+*/.next/
 out/
-build/
-dist/
+*/out/
 coverage/
 *.tsbuildinfo
 next-env.d.ts
@@ -34,23 +54,34 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Local app data and uploads
+# ==============================================================================
+# Application Data, Uploads & Databases
+# ==============================================================================
 uploads/
-backend/uploads/
+*/uploads/
 data/
+*/data/
 *.sqlite
 *.sqlite3
 *.db
 
-# OS and editor files
+# Temporary & backup media
+backup_signatures/
+*.log
+
+# ==============================================================================
+# OS & Editor Files
+# ==============================================================================
 .DS_Store
 Thumbs.db
+ehthumbs.db
 .idea/
-.vscode/
 *.swp
 *.swo
 
-# Tooling caches
+# ==============================================================================
+# Tooling & Cloud Deployment Caches
+# ==============================================================================
 .sixth/
 .vercel/
 .turbo/

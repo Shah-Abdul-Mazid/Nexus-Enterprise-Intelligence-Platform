@@ -61,29 +61,36 @@ async def upload_document(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
-    try:
-        os.makedirs(settings.UPLOADS_DIR, exist_ok=True)
-        file_path = os.path.join(settings.UPLOADS_DIR, file.filename)
+    # Sanitize filename to prevent path traversal
+    safe_filename = os.path.basename(file.filename or "upload.bin")
+    ext = os.path.splitext(safe_filename)[1].lower()
+    allowed_extensions = {".pdf", ".docx", ".doc", ".txt", ".csv", ".xlsx", ".xls"}
+    if ext not in allowed_extensions:
+        raise HTTPException(status_code=400, detail=f"File extension '{ext}' is not permitted.")
 
+    os.makedirs(settings.UPLOADS_DIR, exist_ok=True)
+    file_path = os.path.join(settings.UPLOADS_DIR, safe_filename)
+
+    try:
         with open(file_path, "wb") as f:
             f.write(await file.read())
 
-        filename_lower = file.filename.lower()
+        filename_lower = safe_filename.lower()
 
         try:
-            vector_store.index.delete(filter={"source": {"$eq": file.filename}})
+            vector_store.index.delete(filter={"source": {"$eq": safe_filename}})
         except Exception:
             pass
 
         vectors = []
 
         if filename_lower.endswith((".xlsx", ".xls", ".csv")):
-            records = table_to_records(file_path, file.filename)
+            records = table_to_records(file_path, safe_filename)
 
             for i, record in enumerate(records):
                 vec = retriever_agent._get_embeddings(record["text"])
                 vectors.append({
-                    "id": f"table_{file.filename}_{i}",
+                    "id": f"table_{safe_filename}_{i}",
                     "values": vec,
                     "metadata": record["metadata"],
                 })
@@ -96,27 +103,28 @@ async def upload_document(
             for i, chunk in enumerate(chunks):
                 vec = retriever_agent._get_embeddings(chunk)
                 # Generate a safe, short hash for the ID
-                file_hash = hashlib.md5(file.filename.encode()).hexdigest()[:10]
+                file_hash = hashlib.md5(safe_filename.encode()).hexdigest()[:10]
                 vectors.append({
                     "id": f"doc_{file_hash}_{i}",
                     "values": vec,
                     "metadata": {
                         "text": chunk,
-                        "source": file.filename,
+                        "source": safe_filename,
                         "chunk": i,
                     },
                 })
-
 
         if vectors:
             vector_store.index.upsert(vectors=vectors)
 
         return {
-            "filename": file.filename,
+            "filename": safe_filename,
             "status": "indexed",
             "chunks": len(vectors),
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
