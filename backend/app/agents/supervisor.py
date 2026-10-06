@@ -131,15 +131,15 @@ def generator_node(state: GraphState):
 def compliance_node(state: GraphState):
     answer = state.get("answer", "")
     logs = state.get("agent_logs", [])
-    
+
     check = compliance_agent.run(answer)
     logs.append("Compliance Agent: Security & PII check complete")
-    
+
     if not check["compliant"]:
-        answer = "REDACTED: Response blocked by enterprise security policy."
+        answer = check.get("masked_text", answer)
         violations_str = ", ".join(check["violations"])
-        logs.append(f"SYSTEM ALERT: Compliance violation detected! ({violations_str})")
-        
+        logs.append(f"SYSTEM ALERT: Compliance PII detected and masked! ({violations_str})")
+
     return {"answer": answer, "agent_logs": logs}
 
 def route_decision(state: GraphState):

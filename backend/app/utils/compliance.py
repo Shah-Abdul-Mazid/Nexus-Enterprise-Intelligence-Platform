@@ -68,27 +68,38 @@ def check_compliance(text: str):
             masked_text = masked_text.replace(candidate, "[MASKED_ROUTING]")
             
     # 4. Standard pattern checks on masked text (email, phone, ssn)
-    email_pattern = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
-    if re.search(email_pattern, masked_text, re.IGNORECASE):
+    email_pattern = r'\b[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+\b'
+    email_matches = list(re.finditer(email_pattern, masked_text))
+    if email_matches:
         violations.append("email")
-        
+        for match in email_matches:
+            masked_text = masked_text.replace(match.group(0), "[MASKED_EMAIL]")
+
     ssn_pattern = r'\b\d{3}-\d{2}-\d{4}\b'
-    if re.search(ssn_pattern, masked_text):
+    ssn_matches = list(re.finditer(ssn_pattern, masked_text))
+    if ssn_matches:
         violations.append("ssn")
-        
-    # Check phone number with validation to avoid false positives on short contiguous digit sequences
-    phone_pattern = r'(?<!\d)(?:\+?88)?01[3-9]\d{8}(?!\d)|(?<!\d)\+?\d{1,3}[-.\s]?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}(?!\d)'
-    phone_matches = re.finditer(phone_pattern, masked_text)
-    for match in phone_matches:
-        candidate = match.group(0)
-        if not re.search(r'[-.\s()]', candidate):
-            cleaned = re.sub(r'\D', '', candidate)
-            if len(cleaned) < 10:
-                continue
+        for match in ssn_matches:
+            masked_text = masked_text.replace(match.group(0), "[MASKED_SSN]")
+
+    # Check phone number: matches BD phone (+8801XXXXXXXXX / 01XXXXXXXXX) and standard formatted international phones
+    # Negative lookbehind/lookahead to prevent false positives on DOIs, decimals, years, and URL paths
+    bd_phone_pattern = r'(?<![\d\./])(?:\+?880|0)1[3-9]\d{8}(?![\d\./])'
+    intl_phone_pattern = r'(?<![\d\./])(?:\+\d{1,3}[-.\s])?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}(?![\d\./])'
+
+    found_phone = False
+    for pat in [bd_phone_pattern, intl_phone_pattern]:
+        matches = list(re.finditer(pat, masked_text))
+        if matches:
+            found_phone = True
+            for match in matches:
+                masked_text = masked_text.replace(match.group(0), "[MASKED_PHONE]")
+
+    if found_phone:
         violations.append("phone")
-        break
-            
+
     return {
         "compliant": len(violations) == 0,
-        "violations": list(set(violations))
+        "violations": list(set(violations)),
+        "masked_text": masked_text
     }
