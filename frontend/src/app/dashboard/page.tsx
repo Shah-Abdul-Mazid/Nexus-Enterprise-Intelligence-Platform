@@ -56,6 +56,8 @@ export default function DashboardPage() {
           isLoading={chat.isLoading}
           selectedProvider={chat.selectedProvider}
           setSelectedProvider={chat.setSelectedProvider}
+          selectedTimezone={chat.selectedTimezone}
+          setSelectedTimezone={chat.setSelectedTimezone}
           chatEndRef={chat.chatEndRef}
           handleSendMessage={chat.handleSendMessage}
           handleFeedback={chat.handleFeedback}

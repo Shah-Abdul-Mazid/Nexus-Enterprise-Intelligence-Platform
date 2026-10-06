@@ -13,6 +13,7 @@ export interface Message {
   };
   profile?: Record<string, number>;
   decision?: string;
+  created_at?: string;
 }
 
 export interface AuthSnapshot {

@@ -4,7 +4,8 @@ import React from "react";
 import { Sidebar } from "./Sidebar";
 import { ActiveTab, AuthSnapshot } from "@/types";
 import { getApiBase } from "@/lib/api";
-import { Database, MessageSquare, ShieldCheck } from "lucide-react";
+import { Database, MessageSquare, ShieldCheck, Clock } from "lucide-react";
+import { getBrowserTimeZone } from "@/lib/dateTime";
 
 interface DashboardLayoutProps {
   auth: AuthSnapshot;
@@ -21,6 +22,37 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   setActiveTab,
   children,
 }) => {
+  const [currentTime, setCurrentTime] = React.useState<string>("");
+  const [userTz, setUserTz] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const tz = getBrowserTimeZone();
+    setUserTz(tz);
+
+    const updateTime = () => {
+      const now = new Date();
+      try {
+        const formatted = new Intl.DateTimeFormat(undefined, {
+          timeZone: tz,
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }).format(now);
+        setCurrentTime(formatted);
+      } catch {
+        setCurrentTime(now.toLocaleTimeString());
+      }
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#08090d] text-white md:flex-row">
       {/* Desktop Sidebar */}
@@ -39,10 +71,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <span className="h-2 w-2 rounded-full bg-emerald-300" />
               Operational
             </span>
-            <span className="hidden rounded-lg border border-white/10 px-3 py-1.5 text-slate-400 lg:inline-flex">
+            <span className="hidden rounded-lg border border-white/10 px-3 py-1.5 text-slate-400 2xl:inline-flex">
               API: {getApiBase().replace("https://", "")}
             </span>
           </div>
+
+          {/* Live Location Date & Time Badge */}
+          {currentTime && (
+            <div className="hidden md:flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-slate-300">
+              <Clock size={13} className="text-sky-400" />
+              <span>{currentTime}</span>
+              <span className="rounded bg-sky-400/10 px-1.5 py-0.5 text-[10px] font-medium text-sky-200">
+                {userTz}
+              </span>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">

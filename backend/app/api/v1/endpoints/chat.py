@@ -17,6 +17,7 @@ class ChatRequest(BaseModel):
     message: str
     chat_id: str = None
     provider: str = None
+    timezone: str = None
 
 
 class FeedbackRequest(BaseModel):
@@ -32,6 +33,10 @@ async def chat_endpoint(
     current_user: User = Depends(get_current_user),
 ):
     try:
+        from datetime import datetime, timezone as dt_timezone
+
+        user_now_utc = datetime.now(dt_timezone.utc)
+
         # 1. Get or Create Chat Session
         if request.chat_id:
             raw_chat = db["chats"].find_one({
@@ -41,6 +46,10 @@ async def chat_endpoint(
             if not raw_chat:
                 raise HTTPException(status_code=404, detail="Chat session not found")
             chat = Chat(raw_chat)
+            db["chats"].update_one(
+                {"_id": ObjectId(request.chat_id)},
+                {"$set": {"updated_at": user_now_utc}}
+            )
         else:
             doc = Chat.new_doc(user_id=current_user.id, title=request.message[:50])
             result = db["chats"].insert_one(doc)
@@ -55,6 +64,7 @@ async def chat_endpoint(
         response = await rag_service.answer_query(request.message, provider=request.provider)
 
         # 4. Save Assistant Message
+        assistant_now_utc = datetime.now(dt_timezone.utc)
         assistant_msg_doc = Message.new_doc(
             chat_id=chat.id,
             role="assistant",
@@ -64,8 +74,10 @@ async def chat_endpoint(
         )
         db["messages"].insert_one(assistant_msg_doc)
 
-        # Return response with chat_id for frontend persistence
+        # Return response with chat_id and timestamps for localized UI rendering
         response["chat_id"] = chat.id
+        response["created_at"] = assistant_now_utc.isoformat()
+        response["user_created_at"] = user_now_utc.isoformat()
         return response
 
     except Exception as e:

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import {
   Activity,
   Brain,
+  Clock,
   FileText,
   Gauge,
   Globe,
@@ -17,6 +18,11 @@ import {
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
+import {
+  formatMessageTime,
+  TIMEZONE_OPTIONS,
+  resolveActiveTimeZone,
+} from "@/lib/dateTime";
 
 interface ChatTabProps {
   messages: Message[];
@@ -25,6 +31,8 @@ interface ChatTabProps {
   isLoading: boolean;
   selectedProvider: string;
   setSelectedProvider: (val: string) => void;
+  selectedTimezone?: string;
+  setSelectedTimezone?: (val: string) => void;
   chatEndRef: React.RefObject<HTMLDivElement | null>;
   handleSendMessage: (nextInput?: string) => Promise<void>;
   handleFeedback: (query: string, answer: string, isPositive: boolean) => Promise<void>;
@@ -51,6 +59,8 @@ export const ChatTab: React.FC<ChatTabProps> = ({
   isLoading,
   selectedProvider,
   setSelectedProvider,
+  selectedTimezone,
+  setSelectedTimezone,
   chatEndRef,
   handleSendMessage,
   handleFeedback,
@@ -66,18 +76,35 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                 <SparklesIcon size={15} />
                 Multi-agent intelligence assistant
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <h2 className="text-2xl font-semibold">Ask company knowledge with confidence</h2>
-                <select
-                  value={selectedProvider}
-                  onChange={(e) => setSelectedProvider(e.target.value)}
-                  className="rounded-lg border border-white/10 bg-[#101218] px-3 py-1.5 text-xs text-sky-200 outline-none transition-colors focus:border-sky-400"
-                >
-                  <option value="openai">GPT-4o (OpenAI)</option>
-                  <option value="grok">Grok-2 (X.AI)</option>
-                  <option value="gemini">Gemini 1.5 Flash</option>
-                  <option value="bedrock">AWS Bedrock (Llama 3)</option>
-                </select>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    value={selectedProvider}
+                    onChange={(e) => setSelectedProvider(e.target.value)}
+                    className="rounded-lg border border-white/10 bg-[#101218] px-3 py-1.5 text-xs text-sky-200 outline-none transition-colors focus:border-sky-400"
+                  >
+                    <option value="openai">GPT-4o (OpenAI)</option>
+                    <option value="grok">Grok-2 (X.AI)</option>
+                    <option value="gemini">Gemini 1.5 Flash</option>
+                    <option value="bedrock">AWS Bedrock (Llama 3)</option>
+                  </select>
+                  <div className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-[#101218] px-2.5 py-1 text-xs text-slate-300">
+                    <Clock size={13} className="text-sky-300" />
+                    <select
+                      value={selectedTimezone || "auto"}
+                      onChange={(e) => setSelectedTimezone?.(e.target.value)}
+                      className="bg-transparent text-xs text-slate-300 outline-none cursor-pointer"
+                      title="Adjust Display Timezone"
+                    >
+                      {TIMEZONE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value} className="bg-[#101218] text-slate-200">
+                          {opt.value === "auto" ? `Auto (${resolveActiveTimeZone("auto")})` : opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
                 The assistant retrieves trusted context, generates a grounded answer, then applies compliance
@@ -108,6 +135,12 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                 }`}
               >
                 <p>{msg.content}</p>
+                {msg.role === "user" && msg.created_at && (
+                  <div className="mt-1.5 flex items-center justify-end gap-1 text-[10px] text-sky-100/75">
+                    <Clock size={10} />
+                    <span>{formatMessageTime(msg.created_at, selectedTimezone)}</span>
+                  </div>
+                )}
 
                 {/* Explainability Section (SHAP & LIME) */}
                 {(msg.shap || msg.lime) && (
@@ -243,6 +276,13 @@ export const ChatTab: React.FC<ChatTabProps> = ({
                         </button>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {msg.role === "assistant" && msg.created_at && (
+                  <div className="mt-2.5 flex items-center gap-1.5 text-[10px] text-slate-500">
+                    <Clock size={11} className="text-sky-400/70" />
+                    <span>{formatMessageTime(msg.created_at, selectedTimezone)}</span>
                   </div>
                 )}
               </div>

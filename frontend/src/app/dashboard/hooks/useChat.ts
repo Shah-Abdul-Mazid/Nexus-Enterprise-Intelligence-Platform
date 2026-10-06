@@ -10,11 +10,13 @@ export const useChat = () => {
       role: "assistant",
       content:
         "Welcome to Nexus Intelligence. Ask a question and I will search company knowledge, synthesize an answer, and show the agent trace.",
+      created_at: new Date().toISOString(),
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState("openai");
+  const [selectedTimezone, setSelectedTimezone] = useState("auto");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,7 +27,12 @@ export const useChat = () => {
     const trimmedInput = nextInput.trim();
     if (!trimmedInput || isLoading) return;
 
-    const userMessage: Message = { role: "user", content: trimmedInput };
+    const nowIso = new Date().toISOString();
+    const userMessage: Message = {
+      role: "user",
+      content: trimmedInput,
+      created_at: nowIso,
+    };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
@@ -34,6 +41,7 @@ export const useChat = () => {
       const response = await api.post("/api/v1/chat", {
         message: trimmedInput,
         provider: selectedProvider,
+        timezone: selectedTimezone,
       });
 
       const botMessage: Message = {
@@ -46,6 +54,7 @@ export const useChat = () => {
         fairness: response.data.fairness,
         profile: response.data.profile,
         decision: response.data.decision,
+        created_at: response.data.created_at || new Date().toISOString(),
       };
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
@@ -55,6 +64,7 @@ export const useChat = () => {
         {
           role: "assistant",
           content: "I could not reach the AI engine. Please confirm the FastAPI backend is running on port 8000.",
+          created_at: new Date().toISOString(),
         },
       ]);
     } finally {
@@ -83,6 +93,8 @@ export const useChat = () => {
     isLoading,
     selectedProvider,
     setSelectedProvider,
+    selectedTimezone,
+    setSelectedTimezone,
     chatEndRef,
     handleSendMessage,
     handleFeedback,
