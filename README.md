@@ -136,34 +136,34 @@ NEXT_PUBLIC_API_URL=https://nexus-enterprise-intelligence-platform.onrender.com
 NEXT_PUBLIC_BACKEND_URL=https://nexus-enterprise-intelligence-platform.onrender.com
 
 # Shared Application Firewall Token (Matches RENDER_INTERNAL_SECRET on backend)
-NEXT_PUBLIC_RENDER_INTERNAL_SECRET=9f8e4c3a2b1d0e5f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f
+NEXT_PUBLIC_RENDER_INTERNAL_SECRET=your_32_byte_internal_secret_here
 
 # Upstash Redis Edge Rate Limiting
-UPSTASH_REDIS_REST_URL=https://apt-kitten-203403.upstash.io
-UPSTASH_REDIS_REST_TOKEN=gQAAAAAAAxqLAAIgcDE1MzI2NTkzMzE0MmY0ZjYxOTRhMWRjNWZhNWYwOTFlZQ
+UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your_upstash_rest_token_here
 ```
 
 ### Backend Configuration (`backend/.env`)
 ```env
 # LLM Providers & Vector DB
 LLM_PROVIDER=openai
-OPENAI_API_KEY=your_openai_api_key
-GOOGLE_API_KEY=your_google_api_key
-GROK_API_KEY=your_grok_api_key
-PINECONE_API_KEY=your_pinecone_api_key
+OPENAI_API_KEY=your_openai_api_key_here
+GOOGLE_API_KEY=your_google_api_key_here
+GROK_API_KEY=your_grok_api_key_here
+PINECONE_API_KEY=your_pinecone_api_key_here
 PINECONE_INDEX_NAME=enterprise-rag
-TAVILY_API_KEY=your_tavily_api_key
-WEATHER_API_KEY=your_weather_api_key
+TAVILY_API_KEY=your_tavily_api_key_here
+WEATHER_API_KEY=your_weather_api_key_here
 
 # MongoDB Atlas Connection
-DATABASE_URL=mongodb+srv://<username>:<password>@cluster0.2nsvkzq.mongodb.net/?appName=Cluster0
+DATABASE_URL=mongodb+srv://<username>:<password>@cluster0.abcde.mongodb.net/nexus_db?retryWrites=true&w=majority
 DEMO_MODE=false
 
 # Security & Perimeter Controls
-RENDER_INTERNAL_SECRET=9f8e4c3a2b1d0e5f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f
-JWT_SECRET_KEY=9f8e4c3a2b1d0e5f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f
+RENDER_INTERNAL_SECRET=your_32_byte_internal_secret_here
+JWT_SECRET_KEY=your_jwt_signing_key_here
 FRONTEND_URL=https://nexus-enterprise-intelligence-platform.vercel.app
-ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://nexus-enterprise-intelligence-platform.vercel.app,https://nexus-enterprise-intelligence-platform.onrender.com
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://nexus-enterprise-intelligence-platform.vercel.app
 ```
 
 ---
