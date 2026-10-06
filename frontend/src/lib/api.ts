@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const getApiBase = () => {
-  return process.env.PUBLIC_API_URL || process.env.PUBLIC_BACKEND_URL;
+  return process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL;
 };
 
 export const api = axios.create({
