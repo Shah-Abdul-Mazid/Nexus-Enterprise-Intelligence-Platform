@@ -1,12 +1,12 @@
 import os
+
 import pandas as pd
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from app.core.config import settings
 from app.agents.retriever import retriever_agent
-from app.db.pinecone import vector_store
 from app.api.v1.endpoints.auth import get_current_user
-from fastapi import Depends
+from app.core.config import settings
 from app.db.models import User
+from app.db.pinecone import vector_store
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 router = APIRouter()
 
@@ -58,15 +58,16 @@ def table_to_records(file_path: str, filename: str):
 
 @router.post("/upload")
 async def upload_document(
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user)
+    file: UploadFile = File(...), current_user: User = Depends(get_current_user)
 ):
     # Sanitize filename to prevent path traversal
     safe_filename = os.path.basename(file.filename or "upload.bin")
     ext = os.path.splitext(safe_filename)[1].lower()
     allowed_extensions = {".pdf", ".docx", ".doc", ".txt", ".csv", ".xlsx", ".xls"}
     if ext not in allowed_extensions:
-        raise HTTPException(status_code=400, detail=f"File extension '{ext}' is not permitted.")
+        raise HTTPException(
+            status_code=400, detail=f"File extension '{ext}' is not permitted."
+        )
 
     os.makedirs(settings.UPLOADS_DIR, exist_ok=True)
     file_path = os.path.join(settings.UPLOADS_DIR, safe_filename)
@@ -89,30 +90,36 @@ async def upload_document(
 
             for i, record in enumerate(records):
                 vec = retriever_agent._get_embeddings(record["text"])
-                vectors.append({
-                    "id": f"table_{safe_filename}_{i}",
-                    "values": vec,
-                    "metadata": record["metadata"],
-                })
+                vectors.append(
+                    {
+                        "id": f"table_{safe_filename}_{i}",
+                        "values": vec,
+                        "metadata": record["metadata"],
+                    }
+                )
 
         else:
             from app.utils.unstructured_loader import advanced_partition_file
+
             chunks = advanced_partition_file(file_path)
 
             import hashlib
+
             for i, chunk in enumerate(chunks):
                 vec = retriever_agent._get_embeddings(chunk)
                 # Generate a safe, short hash for the ID
                 file_hash = hashlib.md5(safe_filename.encode()).hexdigest()[:10]
-                vectors.append({
-                    "id": f"doc_{file_hash}_{i}",
-                    "values": vec,
-                    "metadata": {
-                        "text": chunk,
-                        "source": safe_filename,
-                        "chunk": i,
-                    },
-                })
+                vectors.append(
+                    {
+                        "id": f"doc_{file_hash}_{i}",
+                        "values": vec,
+                        "metadata": {
+                            "text": chunk,
+                            "source": safe_filename,
+                            "chunk": i,
+                        },
+                    }
+                )
 
         if vectors:
             vector_store.index.upsert(vectors=vectors)

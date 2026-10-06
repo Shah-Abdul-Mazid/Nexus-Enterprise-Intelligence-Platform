@@ -24,8 +24,9 @@ class BackendFirewallMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        # 2. Allow open health checks, documentation, browser defaults, and public Auth routes
-        # Authentication endpoints (/api/v1/auth/*) must be reachable by users logging in or registering.
+        # 2. Allow open health checks, documentation, browser defaults, and
+        # public Auth routes. Authentication endpoints (/api/v1/auth/*)
+        # must be reachable by users logging in or registering.
         open_endpoints = [
             "/",
             "/health",
@@ -42,23 +43,30 @@ class BackendFirewallMiddleware(BaseHTTPMiddleware):
         if is_open_path:
             return await call_next(request)
 
-        # 3. In local development (localhost / 127.0.0.1 / testsuite), allow requests
-        # so local development isn't blocked when developing or testing endpoints directly.
+        # 3. In local development (localhost / 127.0.0.1 / testsuite),
+        # allow requests so local development isn't blocked while developing
+        # or testing endpoints directly.
         client_host = request.client.host if request.client else ""
         is_localhost = client_host in ("127.0.0.1", "localhost", "::1", "testclient")
 
-        # 4. Validate Internal Secret header on protected routes (Chat, Upload, Scrape, Admin)
+        # 4. Validate Internal Secret header on protected routes
+        # (Chat, Upload, Scrape, Admin)
         if self.internal_secret and not is_localhost:
             client_secret = request.headers.get("X-Internal-Secret")
             if not client_secret or client_secret != self.internal_secret:
                 logger.warning(
-                    f"[Firewall] Blocked direct public invocation on {request.url.path} from {client_host or 'unknown'}"
+                    "[Firewall] Blocked direct public invocation on %s from %s",
+                    request.url.path,
+                    client_host or "unknown",
                 )
                 return JSONResponse(
                     status_code=status.HTTP_403_FORBIDDEN,
                     content={
                         "error": "Access Denied",
-                        "detail": "Direct backend invocation forbidden. Missing or invalid internal security header.",
+                        "detail": (
+                            "Direct backend invocation forbidden. Missing or invalid "
+                            "internal security header."
+                        ),
                     },
                 )
 
@@ -69,7 +77,10 @@ class BackendFirewallMiddleware(BaseHTTPMiddleware):
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                 content={
                     "error": "Payload Too Large",
-                    "detail": f"Request payload exceeds max allowed limit of {self.max_payload_bytes // (1024 * 1024)}MB.",
+                    "detail": (
+                        "Request payload exceeds max allowed limit of "
+                        f"{self.max_payload_bytes // (1024 * 1024)}MB."
+                    ),
                 },
             )
 

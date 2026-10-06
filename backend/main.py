@@ -1,10 +1,11 @@
 import os
+
 import uvicorn
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import admin, auth, chat, scrape, upload
 from app.core.config import settings
 from app.db.database import init_db
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from security.firewall import BackendFirewallMiddleware
 
 # ─── Application ──────────────────────────────────────────────────────────────
@@ -14,10 +15,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 # Ensure MongoDB indexes on startup safely
 @app.on_event("startup")
 async def startup_event():
     init_db()
+
 
 # ─── CORS Configuration ───────────────────────────────────────────────────────
 cors_origins = [
@@ -28,7 +31,9 @@ cors_origins = [
 frontend_url = os.getenv("FRONTEND_URL", "").strip().rstrip("/")
 if frontend_url:
     # Ensure scheme is present
-    if not frontend_url.startswith("http://") and not frontend_url.startswith("https://"):
+    if not frontend_url.startswith("http://") and not frontend_url.startswith(
+        "https://"
+    ):
         frontend_url = f"https://{frontend_url}"
     if frontend_url not in cors_origins:
         cors_origins.append(frontend_url)
@@ -75,6 +80,7 @@ app.include_router(upload.router, prefix="/api/v1", tags=["Upload"])
 app.include_router(scrape.router, prefix="/api/v1", tags=["Scrape"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
 
+
 # ─── Health Checks ──────────────────────────────────────────────────────────────
 @app.get("/")
 @app.get("/health")
@@ -84,6 +90,7 @@ async def root():
         "project": settings.PROJECT_NAME,
         "firewall_active": bool(INTERNAL_SECRET),
     }
+
 
 # ─── Entry Point ───────────────────────────────────────────────────────────────
 if __name__ == "__main__":

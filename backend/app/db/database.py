@@ -24,8 +24,9 @@ logger = logging.getLogger("nexus.database")
 
 def sanitize_mongodb_uri(uri: str) -> str:
     """
-    Sanitizes MongoDB URI by RFC 3986 encoding special characters in username and password.
-    Prevents pymongo InvalidURI crash when passwords contain unescaped '@', '#', etc.
+    Sanitizes MongoDB URI by RFC 3986 encoding special characters in username
+    and password. Prevents pymongo InvalidURI crash when passwords contain
+    unescaped '@', '#', etc.
     """
     if not uri:
         return ""
