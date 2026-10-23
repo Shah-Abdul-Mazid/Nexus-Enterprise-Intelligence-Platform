@@ -68,6 +68,7 @@ data/
 # Temporary & backup media
 backup_signatures/
 *.log
+*.code-workspace
 
 # ==============================================================================
 # OS & Editor Files
