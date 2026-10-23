@@ -3,7 +3,7 @@
 import React from "react";
 import { Sidebar } from "./Sidebar";
 import { ActiveTab, AuthSnapshot } from "@/types";
-import { getApiBase } from "@/lib/api";
+import { getActiveBackend, getActiveBackendName } from "@/lib/api";
 import { Database, MessageSquare, ShieldCheck, Clock } from "lucide-react";
 import { getBrowserTimeZone } from "@/lib/dateTime";
 
@@ -24,6 +24,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 }) => {
   const [currentTime, setCurrentTime] = React.useState<string>("");
   const [userTz, setUserTz] = React.useState<string>("");
+  const [backendStatus, setBackendStatus] = React.useState(() => ({
+    name: getActiveBackendName(),
+    isFailover: getActiveBackend() === "vercel",
+  }));
+
+  React.useEffect(() => {
+    const handleBackendChange = () => {
+      setBackendStatus({
+        name: getActiveBackendName(),
+        isFailover: getActiveBackend() === "vercel",
+      });
+    };
+    window.addEventListener("nexus_backend_change", handleBackendChange);
+    return () => window.removeEventListener("nexus_backend_change", handleBackendChange);
+  }, []);
 
   React.useEffect(() => {
     const tz = getBrowserTimeZone();
@@ -71,8 +86,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <span className="h-2 w-2 rounded-full bg-emerald-300" />
               Operational
             </span>
-            <span className="hidden rounded-lg border border-white/10 px-3 py-1.5 text-slate-400 2xl:inline-flex">
-              API: {getApiBase().replace("https://", "")}
+            <span
+              className={`hidden rounded-lg border px-3 py-1.5 2xl:inline-flex items-center gap-1.5 ${
+                backendStatus.isFailover
+                  ? "border-amber-400/30 bg-amber-400/10 text-amber-200"
+                  : "border-white/10 text-slate-400"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  backendStatus.isFailover ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
+                }`}
+              />
+              API: {backendStatus.name}
             </span>
           </div>
 
