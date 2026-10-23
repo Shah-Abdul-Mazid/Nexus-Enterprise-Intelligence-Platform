@@ -2,6 +2,14 @@ import os
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
+# Search and load root .env and local .env
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_root_env = os.path.abspath(os.path.join(_current_dir, "..", "..", "..", ".env"))
+if os.path.exists(_root_env):
+    load_dotenv(dotenv_path=_root_env)
+_backend_env = os.path.abspath(os.path.join(_current_dir, "..", "..", ".env"))
+if os.path.exists(_backend_env):
+    load_dotenv(dotenv_path=_backend_env)
 load_dotenv()
 
 class Settings(BaseSettings):
