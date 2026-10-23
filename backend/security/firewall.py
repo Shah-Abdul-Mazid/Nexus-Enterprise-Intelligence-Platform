@@ -14,10 +14,13 @@ class BackendFirewallMiddleware(BaseHTTPMiddleware):
         app,
         internal_secret: str = "",
         max_payload_bytes: int = 25 * 1024 * 1024,  # 25MB payload limit
+        rate_limit_per_minute: int = 60,
     ):
         super().__init__(app)
         self.internal_secret = internal_secret.strip() if internal_secret else ""
         self.max_payload_bytes = max_payload_bytes
+        self.rate_limit_per_minute = rate_limit_per_minute
+        self._ip_history = {}
 
     async def dispatch(self, request: Request, call_next) -> Response:
         # 1. Allow CORS preflight requests
@@ -43,11 +46,27 @@ class BackendFirewallMiddleware(BaseHTTPMiddleware):
         if is_open_path:
             return await call_next(request)
 
-        # 3. In local development (localhost / 127.0.0.1 / testsuite),
-        # allow requests so local development isn't blocked while developing
-        # or testing endpoints directly.
-        client_host = request.client.host if request.client else ""
+        # 3. Rate limiting enforcement per IP (sliding 60s window)
+        client_host = (
+            request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or (request.client.host if request.client else "")
+        )
         is_localhost = client_host in ("127.0.0.1", "localhost", "::1", "testclient")
+        if not is_localhost and client_host:
+            now = time.time()
+            history = [t for t in self._ip_history.get(client_host, []) if now - t < 60]
+            if len(history) >= self.rate_limit_per_minute:
+                logger.warning("[Firewall] Rate limit exceeded for IP %s", client_host)
+                return JSONResponse(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    content={
+                        "error": "Too Many Requests",
+                        "detail": f"Rate limit of {self.rate_limit_per_minute} requests/minute exceeded. Please retry shortly.",
+                    },
+                    headers={"Retry-After": "60"},
+                )
+            history.append(now)
+            self._ip_history[client_host] = history
 
         # 4. Validate Internal Secret header on protected routes
         # (Chat, Upload, Scrape, Admin)
