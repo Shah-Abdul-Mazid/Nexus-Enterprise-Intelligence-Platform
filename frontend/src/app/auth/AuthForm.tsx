@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Activity, Cpu, Database, LockKeyhole, Sparkles } from "lucide-react";
+import { Activity, Cpu, Database, LockKeyhole, Sparkles, CheckCircle2 } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface AuthFormProps {
   mode: "login" | "register";
@@ -19,12 +20,25 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [registerFullName, setRegisterFullName] = useState("");
   const [authMessage, setAuthMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<string>("Backend Online");
 
   useEffect(() => {
     if (auth.authHydrated && auth.isAuthenticated) {
       router.push("/dashboard");
     }
   }, [auth.authHydrated, auth.isAuthenticated, router]);
+
+  useEffect(() => {
+    api.get("/health")
+      .then((res) => {
+        if (res.data?.status === "online") {
+          setBackendStatus("Backend Online");
+        }
+      })
+      .catch(() => {
+        setBackendStatus("Connecting...");
+      });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +52,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
         router.push("/dashboard");
       } else {
         await register(loginEmail, loginPassword, registerFullName);
-        setAuthMessage("Account created. You can sign in now.");
-        // Redirect to login page after a brief delay
+        setAuthMessage("Account created successfully. You can sign in now.");
+        // Switch to sign in view or redirect after brief delay
         setTimeout(() => {
           router.push("/auth/login");
         }, 1500);
@@ -49,10 +63,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
       if (mode === "login") {
         if (error.response?.data?.detail) {
           setLoginError(String(error.response.data.detail));
+        } else if (error.response?.status === 401) {
+          setLoginError("Incorrect username or password. Please verify your credentials.");
         } else {
-          setLoginError(
-            "Login failed. Please verify your credentials or ensure the backend server is running.",
-          );
+          setLoginError(error.message || "Login failed. Please verify your credentials.");
         }
       } else {
         if (error.response?.data?.detail) {
@@ -126,11 +140,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
         <section className="flex items-center justify-center p-6">
           <div className="w-full max-w-[420px] rounded-lg border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/30">
-            <div className="mb-7">
-              <p className="text-sm text-slate-400">Secure access</p>
-              <h2 className="mt-1 text-2xl font-semibold">
-                {mode === "login" ? "Enterprise Login" : "Create Account"}
-              </h2>
+            <div className="mb-7 flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-400">Secure access</p>
+                <h2 className="mt-1 text-2xl font-semibold">
+                  {mode === "login" ? "Enterprise Login" : "Create Account"}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-xs font-medium text-emerald-300">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{backendStatus}</span>
+              </div>
             </div>
 
             <div className="mb-5 grid grid-cols-2 gap-2 rounded-lg border border-white/10 bg-black/20 p-1">
@@ -162,59 +182,63 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </button>
             </div>
 
+            {authMessage && (
+              <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-300">
+                <CheckCircle2 size={16} />
+                <span>{authMessage}</span>
+              </div>
+            )}
+
+            {loginError && (
+              <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
+                {loginError}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "register" && (
-                <label className="block">
-                  <span className="mb-2 block text-sm text-slate-300">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300">
                     Full Name
-                  </span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={registerFullName}
                     onChange={(e) => setRegisterFullName(e.target.value)}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors focus:border-sky-400"
-                    placeholder="New User"
+                    placeholder="John Doe"
+                    className="mt-1 block w-full rounded-lg border border-white/10 bg-white/[0.05] px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                   />
-                </label>
+                </div>
               )}
-              <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300">
                   Email / Username
-                </span>
+                </label>
                 <input
-                  type="text"
+                  type="email"
                   required
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors focus:border-sky-400"
                   placeholder="admin@nexus.org"
+                  className="mt-1 block w-full rounded-lg border border-white/10 bg-white/[0.05] px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                 />
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300">
                   Password
-                </span>
+                </label>
                 <input
                   type="password"
                   required
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-sm outline-none transition-colors focus:border-sky-400"
-                  placeholder="password"
+                  placeholder="••••••••"
+                  className="mt-1 block w-full rounded-lg border border-white/10 bg-white/[0.05] px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                 />
-              </label>
-
-              {authMessage && (
-                <p className="text-center text-xs text-emerald-300">
-                  {authMessage}
-                </p>
-              )}
-              {loginError && (
-                <p className="text-center text-xs text-rose-300">
-                  {loginError}
-                </p>
-              )}
+              </div>
 
               <button
                 type="submit"
@@ -227,7 +251,13 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </form>
 
             <div className="mt-6 rounded-lg border border-white/10 bg-black/20 p-4 text-xs text-slate-400">
-              <p className="mb-2 font-medium text-slate-200">Demo accounts</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-medium text-slate-200">Demo accounts</p>
+                <span className="text-[11px] text-emerald-400 flex items-center gap-1.5 font-medium">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Verified
+                </span>
+              </div>
               <p>Admin: admin@nexus.org / Admin2026</p>
               <p>User: user@nexus.org / User2026</p>
             </div>
