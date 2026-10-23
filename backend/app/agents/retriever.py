@@ -4,7 +4,11 @@ from app.db.pinecone import vector_store
 
 class RetrieverAgent:
     def __init__(self):
-        self.index = vector_store.index
+        pass
+
+    @property
+    def index(self):
+        return vector_store.index
 
     def run(self, query: str, provider: str = None):
         print("Retriever Agent active...")

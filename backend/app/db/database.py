@@ -50,8 +50,9 @@ def sanitize_mongodb_uri(uri: str) -> str:
     return cleaned
 
 
-_raw_url = os.getenv("DATABASE_URL") or os.getenv("MONGODB_URL") or ""
-MONGODB_URL = sanitize_mongodb_uri(_raw_url)
+def get_mongodb_url() -> str:
+    raw = os.getenv("DATABASE_URL") or os.getenv("MONGODB_URL") or ""
+    return sanitize_mongodb_uri(raw)
 
 
 def _get_db_name(url: str) -> str:
@@ -73,12 +74,13 @@ _client: MongoClient | None = None
 def get_client() -> MongoClient | None:
     global _client
     if _client is None:
-        if not MONGODB_URL:
+        url = get_mongodb_url()
+        if not url:
             logger.warning("[DB] DATABASE_URL / MONGODB_URL not configured.")
             return None
         try:
             _client = MongoClient(
-                MONGODB_URL,
+                url,
                 tlsCAFile=certifi.where(),
                 serverSelectionTimeoutMS=5000,
                 connectTimeoutMS=5000,
@@ -93,7 +95,8 @@ def get_database() -> Database | None:
     client = get_client()
     if client is None:
         return None
-    db_name = _get_db_name(MONGODB_URL)
+    url = get_mongodb_url()
+    db_name = _get_db_name(url)
     return client[db_name]
 
 
@@ -117,7 +120,8 @@ def get_db():
 # Create indexes on startup (called safely from main.py)
 def init_db():
     try:
-        if not MONGODB_URL:
+        url = get_mongodb_url()
+        if not url:
             logger.warning(
                 "[DB] No MongoDB URI provided. Skipping database initialization."
             )

@@ -33,13 +33,13 @@ SEED_USERS = [
     {
         "full_name":  "Nexus Admin",
         "email":      "admin@nexus.org",
-        "password":   "Admin2026@",
+        "password":   "Admin2026",
         "role":       "admin",
     },
     {
         "full_name":  "Nexus User",
         "email":      "user@nexus.org",
-        "password":   "User2026@",
+        "password":   "User2026",
         "role":       "user",
     },
     {
@@ -66,8 +66,12 @@ def seed():
         existing = db["users"].find_one({"email": user_data["email"]})
 
         if existing:
-            print(f"[SKIP] Already exists: {user_data['email']}")
-            skipped += 1
+            db["users"].update_one(
+                {"email": user_data["email"]},
+                {"$set": {"hashed_password": get_password_hash(user_data["password"])}}
+            )
+            print(f"[UPDATED] Password set for: {user_data['email']}")
+            seeded += 1
             continue
 
         doc = User.new_doc(

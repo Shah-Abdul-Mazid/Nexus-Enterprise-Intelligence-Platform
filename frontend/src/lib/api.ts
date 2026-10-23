@@ -1,6 +1,17 @@
 import axios, { InternalAxiosRequestConfig } from "axios";
 
-export type BackendType = "render" | "vercel";
+export type BackendType = "vercel" | "render";
+
+export const getVercelBackendUrl = (): string => {
+  if (process.env.NEXT_PUBLIC_VERCEL_BACKEND_URL) {
+    return process.env.NEXT_PUBLIC_VERCEL_BACKEND_URL.trim().replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined") {
+    // When running inside a browser, relative path ("") routes directly to FastAPI via vercel.json service rewrites
+    return "";
+  }
+  return "https://nexus-enterprise-intelligence-platform.vercel.app";
+};
 
 export const getRenderBackendUrl = (): string => {
   return (
@@ -10,37 +21,20 @@ export const getRenderBackendUrl = (): string => {
   ).trim().replace(/\/+$/, "");
 };
 
-export const getVercelBackendUrl = (): string => {
-  if (process.env.NEXT_PUBLIC_VERCEL_BACKEND_URL) {
-    return process.env.NEXT_PUBLIC_VERCEL_BACKEND_URL.trim().replace(/\/+$/, "");
-  }
-  if (typeof window !== "undefined") {
-    // When running inside a browser on Vercel, relative path ("") routes to FastAPI via vercel.json service rewrites
-    if (window.location.hostname.includes("vercel.app")) {
-      return "";
-    }
-  }
-  return "https://nexus-enterprise-intelligence-platform-qzwtkbohl.vercel.app";
-};
-
-// Failover state management
-let activeBackend: BackendType = "render";
-const FAILOVER_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes before re-probing Render
+// Set Vercel as the default active backend so the app is always up and instant
+let activeBackend: BackendType = "vercel";
 
 export const getActiveBackend = (): BackendType => {
   if (typeof window !== "undefined") {
     const saved = sessionStorage.getItem("nexus_active_backend") as BackendType | null;
-    const savedTime = parseInt(sessionStorage.getItem("nexus_failover_time") || "0", 10);
-    if (saved === "vercel") {
-      if (Date.now() - savedTime < FAILOVER_COOLDOWN_MS) {
-        activeBackend = "vercel";
-        return "vercel";
-      } else {
-        // Cooldown passed, try Render again as primary
-        activeBackend = "render";
-        sessionStorage.removeItem("nexus_active_backend");
-        sessionStorage.removeItem("nexus_failover_time");
-      }
+    if (saved === "render" || saved === "vercel") {
+      activeBackend = saved;
+      return saved;
+    }
+    // If explicitly configured to prefer render via env var
+    if (process.env.NEXT_PUBLIC_PRIMARY_BACKEND === "render") {
+      activeBackend = "render";
+      return "render";
     }
   }
   return activeBackend;
@@ -50,11 +44,6 @@ export const setActiveBackend = (backend: BackendType) => {
   activeBackend = backend;
   if (typeof window !== "undefined") {
     sessionStorage.setItem("nexus_active_backend", backend);
-    if (backend === "vercel") {
-      sessionStorage.setItem("nexus_failover_time", Date.now().toString());
-    } else {
-      sessionStorage.removeItem("nexus_failover_time");
-    }
     window.dispatchEvent(
       new CustomEvent("nexus_backend_change", {
         detail: { backend, url: getActiveBackendUrl(), name: getActiveBackendName() },
@@ -64,13 +53,13 @@ export const setActiveBackend = (backend: BackendType) => {
 };
 
 export const getActiveBackendUrl = (): string => {
-  return getActiveBackend() === "render" ? getRenderBackendUrl() : getVercelBackendUrl();
+  return getActiveBackend() === "vercel" ? getVercelBackendUrl() : getRenderBackendUrl();
 };
 
 export const getActiveBackendName = (): string => {
   const backend = getActiveBackend();
   if (backend === "vercel") {
-    return "Vercel (Failover Active)";
+    return "Vercel Service (Active)";
   }
   const renderUrl = getRenderBackendUrl();
   return renderUrl.replace("https://", "");
@@ -116,7 +105,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return customConfig;
 });
 
-// 2. Response Interceptor: automatic failover from Render to Vercel
+// 2. Response Interceptor: automatic failover between backends
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -136,84 +125,25 @@ api.interceptors.response.use(
       (isNetworkError || isServerError || isTimeout) &&
       !originalRequest._retryWithFallback;
 
-    const currentBase = originalRequest.baseURL || getActiveBackendUrl();
-    const isRenderRequest =
-      currentBase.includes("onrender.com") || getActiveBackend() === "render";
+    if (shouldFailover) {
+      const currentBackend = getActiveBackend();
+      const targetBackend: BackendType = currentBackend === "vercel" ? "render" : "vercel";
+      const targetUrl = targetBackend === "vercel" ? getVercelBackendUrl() : getRenderBackendUrl();
 
-    if (shouldFailover && isRenderRequest) {
       console.warn(
-        `[Nexus API Failover] Render backend failed (${error.message || error.response?.status}). Automatically switching to Vercel backend...`
+        `[Nexus API Failover] Current backend (${currentBackend}) failed (${error.message || error.response?.status}). Switching to ${targetBackend}...`
       );
 
       originalRequest._retryWithFallback = true;
-      setActiveBackend("vercel");
+      setActiveBackend(targetBackend);
 
-      const vercelUrl = getVercelBackendUrl();
-      originalRequest.baseURL = vercelUrl;
+      originalRequest.baseURL = targetUrl;
       originalRequest._customBaseURL = true;
 
-      // Retry the exact request on Vercel backend
+      // Retry the exact request on fallback backend
       return api.request(originalRequest);
     }
 
     return Promise.reject(error);
   }
 );
-
-// 3. Proactive Health Probe (runs on browser load and periodically)
-if (typeof window !== "undefined") {
-  const probeRenderHealth = () => {
-    if (getActiveBackend() === "render") {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4000); // 4s timeout
-
-      fetch(`${getRenderBackendUrl()}/health`, {
-        signal: controller.signal,
-        mode: "cors",
-      })
-        .then((res) => {
-          clearTimeout(timer);
-          if (!res.ok) {
-            console.warn(
-              `[Nexus Probe] Render healthcheck failed (HTTP ${res.status}). Switching to Vercel backend.`
-            );
-            setActiveBackend("vercel");
-          }
-        })
-        .catch((err) => {
-          clearTimeout(timer);
-          console.warn(
-            `[Nexus Probe] Render unreachable or sleeping (${err.message}). Proactively switching to Vercel backend.`
-          );
-          setActiveBackend("vercel");
-        });
-    } else {
-      // If currently on Vercel fallback, periodically probe if Render has recovered
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4000);
-
-      fetch(`${getRenderBackendUrl()}/health`, {
-        signal: controller.signal,
-        mode: "cors",
-      })
-        .then((res) => {
-          clearTimeout(timer);
-          if (res.ok) {
-            console.info(
-              "[Nexus Probe] Render backend has recovered! Switching back to Render as primary backend."
-            );
-            setActiveBackend("render");
-          }
-        })
-        .catch(() => {
-          clearTimeout(timer);
-        });
-    }
-  };
-
-  // Run initial probe shortly after startup
-  setTimeout(probeRenderHealth, 200);
-
-  // Periodically probe every 3 minutes
-  setInterval(probeRenderHealth, 3 * 60 * 1000);
-}
